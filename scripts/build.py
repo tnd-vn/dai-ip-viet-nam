@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tong hop dai IP Viet Nam va sinh san cau hinh whitelist cho cac tuong lua / web server pho bien.
+"""Tong hop dai IP Viet Nam va sinh san cau hinh allow IP Viet Nam / deny all cho cac tuong lua / web server pho bien.
 
 Chay: python3 scripts/build.py   (tu thu muc goc cua repo)
 Neu tai loi hoac du lieu bat thuong (it hon 1000 dai IPv4) thi giu nguyen file cu va thoat ma 1.

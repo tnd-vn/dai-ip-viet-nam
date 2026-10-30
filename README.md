@@ -1,6 +1,6 @@
 # Dải IP Việt Nam - Danh sách địa chỉ IP Việt Nam (IPv4 + IPv6) cập nhật hàng tuần
 
-**Tổng hợp dải IP Việt Nam** đầy đủ, đã gộp gọn, sẵn sàng dùng để **whitelist IP Việt Nam và chặn toàn bộ IP nước ngoài** (deny all) trên máy chủ, VPS, tường lửa, router. Danh sách được **tổng hợp bởi [TND](https://www.tnd.vn)** và tự động cập nhật mỗi thứ Hai.
+**Tổng hợp dải IP Việt Nam** đầy đủ, đã gộp gọn, sẵn sàng dùng để **chỉ cho phép (allow) IP Việt Nam truy cập, chặn toàn bộ IP nước ngoài** (deny all) trên máy chủ, VPS, tường lửa, router. Danh sách được **tổng hợp bởi [TND](https://www.tnd.vn)** và tự động cập nhật mỗi thứ Hai.
 
 | | Số lượng |
 |---|---|
@@ -13,7 +13,7 @@
 ## Mục lục
 
 - [Tải danh sách IP Việt Nam](#tải-danh-sách-ip-việt-nam)
-- [Khi nào nên whitelist IP Việt Nam?](#khi-nào-nên-whitelist-ip-việt-nam)
+- [Khi nào nên chỉ cho phép IP Việt Nam truy cập?](#khi-nào-nên-chỉ-cho-phép-ip-việt-nam-truy-cập)
 - [Ví dụ: NAS Synology mở ra Internet](#ví-dụ-nas-synology-mở-ra-internet)
 - [Cách chặn IP nước ngoài, chỉ cho phép IP Việt Nam](#cách-chặn-ip-nước-ngoài-chỉ-cho-phép-ip-việt-nam)
   - [iptables + ipset (Linux)](#1-iptables--ipset-linux)
@@ -57,9 +57,9 @@ Tải nhanh bằng lệnh:
 curl -fsSL https://raw.githubusercontent.com/tnd-vn/dai-ip-viet-nam/main/vn-ipv4.txt -o vn-ipv4.txt
 ```
 
-## Khi nào nên whitelist IP Việt Nam?
+## Khi nào nên chỉ cho phép IP Việt Nam truy cập?
 
-Whitelist IP Việt Nam + deny all **chỉ thực sự cần thiết khi đủ cả hai điều kiện**:
+Allow IP Việt Nam + deny all (chỉ cho phép IP Việt Nam, chặn phần còn lại) **chỉ thực sự cần thiết khi đủ cả hai điều kiện**:
 
 1. Thiết bị hoặc dịch vụ **chỉ có người dùng ở Việt Nam** (nhân viên, gia đình, đối tác trong nước).
 2. **Không cần Google hay bất kỳ dịch vụ nước ngoài nào truy cập vào**, tức không cần lên kết quả tìm kiếm, không nhận webhook từ nước ngoài.
@@ -81,7 +81,7 @@ Ví dụ điển hình:
 
 ## Ví dụ: NAS Synology mở ra Internet
 
-Một công ty nhỏ mở NAS Synology ra Internet (cổng 5000/5001) để nhân viên truy cập file khi ở nhà. Người dùng đều ở Việt Nam, NAS không cần Google index. Đây là trường hợp **nên** whitelist IP Việt Nam, vì chỉ riêng năm 2026 Synology đã công bố nhiều lỗ hổng có thể khai thác từ xa:
+Một công ty nhỏ mở NAS Synology ra Internet (cổng 5000/5001) để nhân viên truy cập file khi ở nhà. Người dùng đều ở Việt Nam, NAS không cần Google index. Đây là trường hợp **nên** chỉ cho phép IP Việt Nam truy cập, vì chỉ riêng năm 2026 Synology đã công bố nhiều lỗ hổng có thể khai thác từ xa:
 
 | Bản tin Synology | Công bố | Lỗ hổng | Mức độ | Bản vá |
 |---|---|---|---|---|
@@ -96,7 +96,7 @@ Nguồn: [trang Security Advisory của Synology](https://www.synology.com/en-gl
 
 Nếu buộc phải mở NAS ra Internet, làm theo thứ tự:
 
-1. **Cập nhật DSM ngay**: Control Panel > Update & Restore. Đây là bước bắt buộc, whitelist chỉ là lớp phụ.
+1. **Cập nhật DSM ngay**: Control Panel > Update & Restore. Đây là bước bắt buộc, chặn theo quốc gia chỉ là lớp phụ.
 2. **Chỉ cho phép IP Việt Nam vào NAS**: Control Panel > Security > Firewall > Edit Rules, tạo luật **Allow** với Source IP chọn **Location: Vietnam**, đặt thêm luật Allow cho mạng LAN (ví dụ `192.168.0.0/16`), và ở phần hành động khi không khớp luật nào chọn **Deny access**. DSM xét luật từ trên xuống, dừng ở luật khớp đầu tiên: đừng để luật Allow cho mọi IP nằm trên luật chặn. DSM có sẵn dữ liệu quốc gia nên không cần nạp danh sách. Nếu NAS đứng sau router MikroTik hoặc tường lửa Linux, có thể chặn ngay ở router bằng [`mikrotik-vn.rsc`](formats/mikrotik-vn.rsc) hoặc [`ipset-vn.txt`](formats/ipset-vn.txt) để chặn trước khi gói tin tới NAS.
 3. **Tắt Telnet và SSH** nếu không dùng: Control Panel > Terminal & SNMP.
 4. **Bật chặn tự động** (Security > Protection > Auto Block) và **xác thực 2 lớp** cho mọi tài khoản quản trị.
@@ -104,7 +104,7 @@ Nếu buộc phải mở NAS ra Internet, làm theo thứ tự:
 
 ## Cách chặn IP nước ngoài, chỉ cho phép IP Việt Nam
 
-**Luôn thêm IP quản trị của bạn vào whitelist trước**, và giữ một phiên SSH/console đang mở khi áp dụng, để không tự khoá mình khỏi máy chủ.
+**Luôn thêm luật allow cho IP quản trị của bạn trước**, và giữ một phiên SSH/console đang mở khi áp dụng, để không tự khoá mình khỏi máy chủ.
 
 ### 1. iptables + ipset (Linux)
 
@@ -239,7 +239,7 @@ Action: **Block** hoặc **Managed Challenge**.
 
 - **Đừng chặn website công khai** nếu cần SEO: Googlebot, Bingbot thu thập dữ liệu chủ yếu từ IP Mỹ. Chỉ chặn các thiết bị, dịch vụ dùng nội bộ trong nước.
 - Khi bạn đi nước ngoài, dùng mạng di động roaming hoặc VPN, IP của bạn **không còn là IP Việt Nam**. Hãy có sẵn một đường vào dự phòng (VPN về văn phòng, console của nhà cung cấp VPS).
-- Cổng thanh toán, webhook, API của dịch vụ quốc tế (PayPal, Stripe, Google, Facebook, GitHub...) gọi từ IP nước ngoài: hãy whitelist IP của họ nếu chặn cổng web.
+- Cổng thanh toán, webhook, API của dịch vụ quốc tế (PayPal, Stripe, Google, Facebook, GitHub...) gọi từ IP nước ngoài: hãy allow thêm IP của họ nếu chặn cổng web.
 - Dữ liệu địa chỉ IP thay đổi theo thời gian (cấp mới, thu hồi). Cập nhật danh sách định kỳ, ví dụ cron hàng tuần:
 
 ```bash
@@ -275,7 +275,7 @@ print(any(ipaddress.ip_address("113.161.1.1") in n for n in vn))
 
 ### Danh sách có chính xác 100% không?
 
-Danh sách phản ánh các vùng địa chỉ được cấp phát cho Việt Nam. Một số ít IP có thể được dùng thực tế ở nước khác (doanh nghiệp đặt máy chủ ở nước ngoài) và ngược lại. Với mục đích whitelist bảo mật, độ chính xác này là đủ dùng; nếu phát hiện sai lệch, hãy góp ý theo mục bên dưới.
+Danh sách phản ánh các vùng địa chỉ được cấp phát cho Việt Nam. Một số ít IP có thể được dùng thực tế ở nước khác (doanh nghiệp đặt máy chủ ở nước ngoài) và ngược lại. Với mục đích chặn truy cập từ nước ngoài, độ chính xác này là đủ dùng; nếu phát hiện sai lệch, hãy góp ý theo mục bên dưới.
 
 ### Danh sách được cập nhật bao lâu một lần?
 
@@ -288,11 +288,11 @@ Danh sách **tổng hợp bởi TND**. Nếu bạn thấy dải IP Việt Nam n�
 - Mở [Issue](https://github.com/tnd-vn/dai-ip-viet-nam/issues) hoặc gửi Pull Request, hoặc
 - Liên hệ góp ý trực tiếp với TND tại [www.tnd.vn/lien-he](https://www.tnd.vn/lien-he/).
 
-Nếu repo hữu ích, hãy bấm **Star** để nhiều người cần whitelist IP Việt Nam tìm thấy hơn.
+Nếu repo hữu ích, hãy bấm **Star** để nhiều người cần chặn IP nước ngoài, chỉ cho phép IP Việt Nam tìm thấy hơn.
 
 ## Về TND
 
-[TND](https://www.tnd.vn) là nhà cung cấp hạ tầng tại Việt Nam, vận hành máy chủ và dải IP riêng trong nước. Nếu bạn cần máy chủ đặt tại Việt Nam để áp dụng whitelist này, hoặc cần IP Việt Nam cố định để truy cập các hệ thống chỉ mở cho IP trong nước:
+[TND](https://www.tnd.vn) là nhà cung cấp hạ tầng tại Việt Nam, vận hành máy chủ và dải IP riêng trong nước. Nếu bạn cần máy chủ đặt tại Việt Nam để áp dụng danh sách này, hoặc cần IP Việt Nam cố định để truy cập các hệ thống chỉ mở cho IP trong nước:
 
 - **[VPS Việt Nam giá rẻ](https://www.tnd.vn/vps/)** - VPS NVMe đặt tại Việt Nam, tạo máy trong 60 giây, từ 129K/tháng.
 - **[Proxy Việt Nam IPv4 riêng](https://www.tnd.vn/proxy-viet-nam/)** - IP tĩnh Việt Nam dùng riêng, 95K/tháng.
