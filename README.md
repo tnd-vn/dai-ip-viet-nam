@@ -1,5 +1,7 @@
 # Dải IP Việt Nam - Danh sách địa chỉ IP Việt Nam (IPv4 + IPv6) cập nhật hàng tuần
 
+<p align="center"><img src="assets/dai-ip-viet-nam-tnd.jpg" alt="Tổng hợp dải IP Việt Nam miễn phí trên GitHub - TND" width="540"></p>
+
 **Tổng hợp dải IP Việt Nam** đầy đủ, đã gộp gọn, sẵn sàng dùng để **chỉ cho phép (allow) IP Việt Nam truy cập, chặn toàn bộ IP nước ngoài** (deny all) trên máy chủ, VPS, tường lửa, router. Danh sách được **tổng hợp bởi [TND](https://www.tnd.vn)** và tự động cập nhật mỗi thứ Hai.
 
 | | Số lượng |
