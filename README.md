@@ -311,6 +311,8 @@ Danh sách **tổng hợp bởi TND**. Nếu bạn thấy dải IP Việt Nam n�
 - Mở [Issue](https://github.com/tnd-vn/dai-ip-viet-nam/issues) hoặc gửi Pull Request, hoặc
 - Liên hệ góp ý trực tiếp với TND tại [www.tnd.vn/lien-he](https://www.tnd.vn/lien-he/).
 
+Bài giới thiệu repo trên blog TND: [Tổng hợp dải IP Việt Nam miễn phí trên GitHub](https://www.tnd.vn/dai-ip-viet-nam-github-tnd-23818/).
+
 Nếu repo hữu ích, hãy bấm **Star** để nhiều người cần chặn IP nước ngoài, chỉ cho phép IP Việt Nam tìm thấy hơn.
 
 ## Về TND
