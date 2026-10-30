@@ -92,10 +92,12 @@ Một công ty nhỏ mở NAS Synology ra Internet (cổng 5000/5001) để nhâ
 
 Nguồn: [trang Security Advisory của Synology](https://www.synology.com/en-global/security/advisory).
 
-Các bước bảo vệ theo thứ tự:
+> **Khuyến nghị tốt nhất: đừng mở NAS ra Internet.** Hãy truy cập NAS qua VPN như [Tailscale](https://tailscale.com/kb/1131/synology) (không cần mở cổng) hoặc WireGuard dựng trên router. Khi NAS không lộ cổng nào, các lỗ hổng trên gần như không thể bị khai thác từ xa. Hướng dẫn chi tiết: [Bảo mật NAS Synology: dùng VPN thay vì mở ra Internet](https://www.tnd.vn/bao-mat-nas-synology-vpn-chan-ip-nuoc-ngoai-23815/).
+
+Nếu buộc phải mở NAS ra Internet, làm theo thứ tự:
 
 1. **Cập nhật DSM ngay**: Control Panel > Update & Restore. Đây là bước bắt buộc, whitelist chỉ là lớp phụ.
-2. **Chỉ cho phép IP Việt Nam vào NAS**: Control Panel > Security > Firewall > Edit Rules, tạo luật **Allow** với Source IP chọn **Location: Vietnam**, đặt thêm luật Allow cho mạng LAN (ví dụ `192.168.0.0/16`), luật cuối cùng **Deny** tất cả. DSM có sẵn dữ liệu quốc gia nên không cần nạp danh sách. Nếu NAS đứng sau router MikroTik hoặc tường lửa Linux, có thể chặn ngay ở router bằng [`mikrotik-vn.rsc`](formats/mikrotik-vn.rsc) hoặc [`ipset-vn.txt`](formats/ipset-vn.txt) để chặn trước khi gói tin tới NAS.
+2. **Chỉ cho phép IP Việt Nam vào NAS**: Control Panel > Security > Firewall > Edit Rules, tạo luật **Allow** với Source IP chọn **Location: Vietnam**, đặt thêm luật Allow cho mạng LAN (ví dụ `192.168.0.0/16`), và ở phần hành động khi không khớp luật nào chọn **Deny access**. DSM xét luật từ trên xuống, dừng ở luật khớp đầu tiên: đừng để luật Allow cho mọi IP nằm trên luật chặn. DSM có sẵn dữ liệu quốc gia nên không cần nạp danh sách. Nếu NAS đứng sau router MikroTik hoặc tường lửa Linux, có thể chặn ngay ở router bằng [`mikrotik-vn.rsc`](formats/mikrotik-vn.rsc) hoặc [`ipset-vn.txt`](formats/ipset-vn.txt) để chặn trước khi gói tin tới NAS.
 3. **Tắt Telnet và SSH** nếu không dùng: Control Panel > Terminal & SNMP.
 4. **Bật chặn tự động** (Security > Protection > Auto Block) và **xác thực 2 lớp** cho mọi tài khoản quản trị.
 5. **Cân nhắc QuickConnect**: kết nối qua máy chủ trung gian (relay) của Synology đi theo đường khác cổng mở trực tiếp, nên có thể không chịu luật tường lửa ở trên. Nếu muốn chặn chặt, hãy tắt QuickConnect và chỉ truy cập qua địa chỉ IP / tên miền riêng hoặc VPN.
