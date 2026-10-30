@@ -188,6 +188,10 @@ Kiểm tra rồi nạp lại: `nginx -t && systemctl reload nginx`.
 
 Apache 2.4, đặt trong `<Directory>`, `<Location>` hoặc file `.htaccess`:
 
+```bash
+curl -fsSL https://raw.githubusercontent.com/tnd-vn/dai-ip-viet-nam/main/formats/apache-require-vn.conf -o /etc/apache2/vn-require.conf
+```
+
 ```apache
 <VirtualHost *:443>
     ServerName erp.congty.vn
@@ -209,23 +213,40 @@ CC_ALLOW_PORTS = "VN"
 CC_ALLOW_PORTS_TCP = "22,2087,2222"
 ```
 
-Hoặc dùng danh sách của repo này: thêm dòng `Include /etc/csf/vn-ipv4.txt` vào `csf.allow`, rồi `csf -r`.
+**Phải xoá các cổng này khỏi `TCP_IN`**, nếu không chúng vẫn mở cho mọi IP và luật theo quốc gia không có tác dụng.
+
+Hoặc dùng danh sách của repo này (vẫn phải xoá cổng khỏi `TCP_IN`, vì `csf.allow` chỉ cho phép thêm chứ không chặn):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tnd-vn/dai-ip-viet-nam/main/vn-ipv4.txt -o /etc/csf/vn-ipv4.txt
+echo "Include /etc/csf/vn-ipv4.txt" >> /etc/csf/csf.allow
+csf -r
+```
+
+Cách này cho phép IP Việt Nam vào **mọi cổng**, kể cả cổng đã đóng trong `TCP_IN`. Muốn chỉ mở một số cổng cho IP Việt Nam, dùng `CC_ALLOW_PORTS` ở trên.
 
 ### 7. MikroTik RouterOS
 
 ```
 /tool fetch url="https://raw.githubusercontent.com/tnd-vn/dai-ip-viet-nam/main/formats/mikrotik-vn.rsc" dst-path=vn.rsc
 /import file-name=vn.rsc
-/ip firewall filter add chain=input protocol=tcp dst-port=8291,22 src-address-list=!VN action=drop comment="Chi cho IP Viet Nam vao Winbox/SSH"
+/ip firewall filter add chain=input in-interface-list=WAN protocol=tcp dst-port=8291,22 src-address-list=!VN action=drop comment="Chi cho IP Viet Nam vao Winbox/SSH"
 ```
+
+`in-interface-list=WAN` là bắt buộc: thiếu nó, máy trong mạng LAN (192.168.x.x không nằm trong danh sách IP Việt Nam) cũng bị chặn Winbox. Router cấu hình mặc định đã có interface list `WAN`; nếu không có, thay bằng `in-interface=` cổng WAN của bạn. Chuỗi `comment` để không dấu vì RouterOS hiển thị Unicode không ổn định.
 
 ### 8. Windows Server / Remote Desktop (RDP)
 
 Mở PowerShell bằng quyền Administrator, chạy [`windows-firewall-vn.ps1`](formats/windows-firewall-vn.ps1) để tạo rule cho phép IP Việt Nam vào cổng 3389. Sau đó **tắt rule Remote Desktop mặc định** (đang cho phép mọi IP) để chặn IP nước ngoài:
 
 ```powershell
+# Cho phép mạng nội bộ (sửa lại dải LAN của bạn), nếu không máy trong LAN cũng bị chặn RDP
+New-NetFirewallRule -DisplayName "Allow LAN RDP" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3389 -RemoteAddress 192.168.0.0/16
+# Tắt rule mặc định đang cho phép mọi IP (Windows tiếng Anh; bản tiếng Việt tên nhóm có thể khác, xem trong wf.msc)
 Disable-NetFirewallRule -DisplayGroup "Remote Desktop"
 ```
+
+Nếu RDP chạy cổng khác 3389, sửa `-LocalPort` trong file trước khi chạy.
 
 ### 9. Cloudflare
 

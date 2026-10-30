@@ -73,9 +73,13 @@ def main():
     write('formats/apache-require-vn.conf', head + '<RequireAny>\n' +
           ''.join(f'    Require ip {c}\n' for c in s4 + s6) + '</RequireAny>\n')
     # ipset restore: ipset restore -exist < formats/ipset-vn.txt
-    write('formats/ipset-vn.txt', head + 'create vn4 hash:net family inet maxelem 65536 -exist\n'
-          'create vn6 hash:net family inet6 maxelem 65536 -exist\nflush vn4\nflush vn6\n' +
-          ''.join(f'add vn4 {c}\n' for c in s4) + ''.join(f'add vn6 {c}\n' for c in s6))
+    # Nạp vào set tạm rồi swap, để lúc cập nhật set đang dùng không bao giờ rỗng (luật DROP sẽ chặn cả IP Việt Nam)
+    write('formats/ipset-vn.txt', head +
+          'create vn4 hash:net family inet maxelem 65536 -exist\ncreate vn6 hash:net family inet6 maxelem 65536 -exist\n'
+          'create vn4-tmp hash:net family inet maxelem 65536 -exist\ncreate vn6-tmp hash:net family inet6 maxelem 65536 -exist\n'
+          'flush vn4-tmp\nflush vn6-tmp\n' +
+          ''.join(f'add vn4-tmp {c}\n' for c in s4) + ''.join(f'add vn6-tmp {c}\n' for c in s6) +
+          'swap vn4-tmp vn4\nswap vn6-tmp vn6\ndestroy vn4-tmp\ndestroy vn6-tmp\n')
     # nftables: include "/etc/nftables.d/vn.nft" trong table inet filter
     write('formats/nftables-vn.nft', head + 'set vn4 {\n    type ipv4_addr\n    flags interval\n    elements = {\n        ' +
           ',\n        '.join(s4) + '\n    }\n}\nset vn6 {\n    type ipv6_addr\n    flags interval\n    elements = {\n        ' +
