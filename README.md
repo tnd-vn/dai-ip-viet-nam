@@ -14,6 +14,7 @@
 
 - [Tải danh sách IP Việt Nam](#tải-danh-sách-ip-việt-nam)
 - [Khi nào nên whitelist IP Việt Nam?](#khi-nào-nên-whitelist-ip-việt-nam)
+- [Ví dụ: NAS Synology mở ra Internet](#ví-dụ-nas-synology-mở-ra-internet)
 - [Cách chặn IP nước ngoài, chỉ cho phép IP Việt Nam](#cách-chặn-ip-nước-ngoài-chỉ-cho-phép-ip-việt-nam)
   - [iptables + ipset (Linux)](#1-iptables--ipset-linux)
   - [nftables (Linux)](#2-nftables-linux)
@@ -58,17 +59,46 @@ curl -fsSL https://raw.githubusercontent.com/tnd-vn/dai-ip-viet-nam/main/vn-ipv4
 
 ## Khi nào nên whitelist IP Việt Nam?
 
-Phần lớn các đợt dò mật khẩu SSH, RDP, quét lỗ hổng WordPress, tấn công vào cổng cơ sở dữ liệu đến từ IP nước ngoài. Nếu người dùng và quản trị viên của bạn đều ở Việt Nam, việc **chỉ cho phép IP Việt Nam và chặn cả thế giới** sẽ cắt bỏ phần lớn lưu lượng độc hại đó, giảm tải log và giảm bề mặt tấn công.
+Whitelist IP Việt Nam + deny all **chỉ thực sự cần thiết khi đủ cả hai điều kiện**:
 
-Phù hợp để bảo vệ:
+1. Thiết bị hoặc dịch vụ **chỉ có người dùng ở Việt Nam** (nhân viên, gia đình, đối tác trong nước).
+2. **Không cần Google hay bất kỳ dịch vụ nước ngoài nào truy cập vào**, tức không cần lên kết quả tìm kiếm, không nhận webhook từ nước ngoài.
 
-- Cổng quản trị: **SSH (22)**, **Remote Desktop (3389)**, Proxmox (8006), Webmin, cPanel/DirectAdmin.
-- Trang quản trị web: `/wp-admin`, `wp-login.php`, `/admin`, phpMyAdmin.
-- Cơ sở dữ liệu mở ra ngoài: MySQL (3306), PostgreSQL (5432), SQL Server (1433), Redis.
-- Tổng đài VoIP / SIP (5060), VPN (WireGuard, OpenVPN, L2TP), phần mềm kế toán, máy chủ nội bộ.
-- Website hoặc ứng dụng chỉ phục vụ khách hàng trong nước.
+Khi đó, chặn cả thế giới gần như không mất gì, nhưng cắt bỏ được phần lớn các đợt quét tự động và khai thác lỗ hổng đến từ IP nước ngoài, nhất là trong khoảng thời gian từ lúc lỗ hổng được công bố đến lúc bạn kịp cập nhật.
+
+Ví dụ điển hình:
+
+- **NAS** (Synology, QNAP, TrueNAS) mở DSM / File Station / Drive ra Internet cho nhân viên làm việc từ xa. Xem [ví dụ chi tiết bên dưới](#ví-dụ-nas-synology-mở-ra-internet).
+- **Camera / đầu ghi** (NVR, DVR) xem từ xa.
+- **Remote Desktop (3389)**, **SSH (22)**, trang quản trị router, Proxmox (8006), Webmin.
+- **Phần mềm kế toán, ERP, CRM nội bộ** chạy trên máy chủ riêng.
+- **Tổng đài VoIP / SIP (5060)**, **VPN** (WireGuard, OpenVPN, L2TP) cho nhân viên.
+- **Cơ sở dữ liệu** buộc phải mở ra ngoài: MySQL (3306), PostgreSQL (5432), SQL Server (1433).
+
+**Không phù hợp** cho website bán hàng, blog, landing page cần SEO: chặn IP nước ngoài sẽ chặn luôn Googlebot và website sẽ rớt khỏi Google. Với các website này hãy dùng WAF, giới hạn tốc độ và cập nhật bản vá thay vì chặn theo quốc gia.
 
 > Đây là **một lớp bảo vệ bổ sung**, không thay thế mật khẩu mạnh, xác thực 2 lớp, SSH key và cập nhật bản vá. Kẻ tấn công vẫn có thể dùng IP Việt Nam (VPS, proxy trong nước).
+
+## Ví dụ: NAS Synology mở ra Internet
+
+Một công ty nhỏ mở NAS Synology ra Internet (cổng 5000/5001) để nhân viên truy cập file khi ở nhà. Người dùng đều ở Việt Nam, NAS không cần Google index. Đây là trường hợp **nên** whitelist IP Việt Nam, vì chỉ riêng năm 2026 Synology đã công bố nhiều lỗ hổng có thể khai thác từ xa:
+
+| Bản tin Synology | Công bố | Lỗ hổng | Mức độ | Bản vá |
+|---|---|---|---|---|
+| Synology-SA-26:13 (DSM) | 18/09/2026 | CVE-2026-13684 (SCGI), CVE-2026-13639 (đăng nhập): **không cần đăng nhập** vẫn đọc/ghi file tùy ý, làm treo NAS | Critical, CVSS 9.8 | DSM 7.2.1-69057-12, 7.2.2-72806-9, 7.3.2-86009-4, 7.4-90075 |
+| Synology-SA-26:03 (telnetd) | 19/03/2026 | CVE-2026-32746: chạy lệnh từ xa không cần đăng nhập nếu bật Telnet | Critical, CVSS 9.8 | DSM 7.2.1-69057-11, 7.2.2-72806-8, 7.3.2-86009-3 |
+| Synology-SA-26:14 (PHP2Shell) | 22/10/2026 | CVE-2026-109618, CVE-2026-109619 trong PHP: chạy mã từ xa qua các gói Calendar, Mail Station, PHP 7.3 đến 8.4 | Critical, CVSS 9.8 | Cập nhật gói tương ứng trong Package Center (PHP 7.3 không còn bản vá) |
+| Synology-SA-26:06 (DSM) | 15/04/2026 | 11 lỗi (CVE-2026-40530 đến 40539, CVE-2026-4036): đọc/ghi file, lộ file chia sẻ | Important | DSM 7.2.1-69057-10, 7.2.2-72806-7, 7.3.2-86009-2 |
+
+Nguồn: [trang Security Advisory của Synology](https://www.synology.com/en-global/security/advisory).
+
+Các bước bảo vệ theo thứ tự:
+
+1. **Cập nhật DSM ngay**: Control Panel > Update & Restore. Đây là bước bắt buộc, whitelist chỉ là lớp phụ.
+2. **Chỉ cho phép IP Việt Nam vào NAS**: Control Panel > Security > Firewall > Edit Rules, tạo luật **Allow** với Source IP chọn **Location: Vietnam**, đặt thêm luật Allow cho mạng LAN (ví dụ `192.168.0.0/16`), luật cuối cùng **Deny** tất cả. DSM có sẵn dữ liệu quốc gia nên không cần nạp danh sách. Nếu NAS đứng sau router MikroTik hoặc tường lửa Linux, có thể chặn ngay ở router bằng [`mikrotik-vn.rsc`](formats/mikrotik-vn.rsc) hoặc [`ipset-vn.txt`](formats/ipset-vn.txt) để chặn trước khi gói tin tới NAS.
+3. **Tắt Telnet và SSH** nếu không dùng: Control Panel > Terminal & SNMP.
+4. **Bật chặn tự động** (Security > Protection > Auto Block) và **xác thực 2 lớp** cho mọi tài khoản quản trị.
+5. **Cân nhắc QuickConnect**: kết nối qua máy chủ trung gian (relay) của Synology đi theo đường khác cổng mở trực tiếp, nên có thể không chịu luật tường lửa ở trên. Nếu muốn chặn chặt, hãy tắt QuickConnect và chỉ truy cập qua địa chỉ IP / tên miền riêng hoặc VPN.
 
 ## Cách chặn IP nước ngoài, chỉ cho phép IP Việt Nam
 
@@ -131,11 +161,20 @@ Sau đó `ufw reload`. Cần nạp ipset trước khi UFW khởi động (ví d�
 curl -fsSL https://raw.githubusercontent.com/tnd-vn/dai-ip-viet-nam/main/formats/nginx-allow-vn.conf -o /etc/nginx/vn-allow.conf
 ```
 
+Ví dụ Nginx làm reverse proxy cho NAS hoặc ứng dụng nội bộ (không cần Google index):
+
 ```nginx
-location ~ ^/(wp-admin|wp-login\.php) {
-    allow 203.0.113.10;              # IP quản trị của bạn
+server {
+    listen 443 ssl;
+    server_name nas.congty.vn;
+    # ... ssl_certificate, ssl_certificate_key
+
+    allow 192.168.0.0/16;             # mạng nội bộ
     include /etc/nginx/vn-allow.conf; # allow dải IP Việt Nam + deny all
-    # ... cấu hình PHP như bình thường
+
+    location / {
+        proxy_pass https://192.168.1.10:5001;
+    }
 }
 ```
 
@@ -146,9 +185,13 @@ Kiểm tra rồi nạp lại: `nginx -t && systemctl reload nginx`.
 Apache 2.4, đặt trong `<Directory>`, `<Location>` hoặc file `.htaccess`:
 
 ```apache
-<Files "wp-login.php">
-    Include /etc/apache2/vn-require.conf
-</Files>
+<VirtualHost *:443>
+    ServerName erp.congty.vn
+    <Location />
+        Include /etc/apache2/vn-require.conf
+    </Location>
+    # ... phần còn lại của ứng dụng nội bộ
+</VirtualHost>
 ```
 
 Với `.htaccess` (không dùng được `Include`), dán thẳng nội dung file [`apache-require-vn.conf`](formats/apache-require-vn.conf). LiteSpeed / OpenLiteSpeed đọc được cú pháp này.
@@ -182,17 +225,17 @@ Disable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
 ### 9. Cloudflare
 
-Nếu website đi qua Cloudflare (đám mây cam), máy chủ chỉ thấy IP của Cloudflare, nên chặn theo IP ở máy chủ sẽ không đúng. Hãy chặn ở Cloudflare: **Security > WAF > Custom rules**, biểu thức:
+Nếu tên miền đi qua Cloudflare (đám mây cam), máy chủ chỉ thấy IP của Cloudflare, nên chặn theo IP ở máy chủ sẽ không đúng. Hãy chặn ở Cloudflare: **Security > WAF > Custom rules**, áp dụng cho tên miền con của dịch vụ nội bộ (không áp cho website chính):
 
 ```
-(ip.src.country ne "VN" and starts_with(http.request.uri.path, "/wp-admin"))
+(ip.src.country ne "VN" and http.host eq "nas.congty.vn")
 ```
 
 Action: **Block** hoặc **Managed Challenge**.
 
 ## Lưu ý quan trọng trước khi chặn IP nước ngoài
 
-- **Đừng chặn toàn bộ website công khai** nếu cần SEO: Googlebot, Bingbot thu thập dữ liệu chủ yếu từ IP Mỹ. Chỉ nên chặn trang quản trị và các cổng dịch vụ.
+- **Đừng chặn website công khai** nếu cần SEO: Googlebot, Bingbot thu thập dữ liệu chủ yếu từ IP Mỹ. Chỉ chặn các thiết bị, dịch vụ dùng nội bộ trong nước.
 - Khi bạn đi nước ngoài, dùng mạng di động roaming hoặc VPN, IP của bạn **không còn là IP Việt Nam**. Hãy có sẵn một đường vào dự phòng (VPN về văn phòng, console của nhà cung cấp VPS).
 - Cổng thanh toán, webhook, API của dịch vụ quốc tế (PayPal, Stripe, Google, Facebook, GitHub...) gọi từ IP nước ngoài: hãy whitelist IP của họ nếu chặn cổng web.
 - Dữ liệu địa chỉ IP thay đổi theo thời gian (cấp mới, thu hồi). Cập nhật danh sách định kỳ, ví dụ cron hàng tuần:
