@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Tong hop dai IP Viet Nam va sinh san cau hinh allow IP Viet Nam / deny all cho cac tuong lua / web server pho bien.
+"""Tổng hợp dải IP Việt Nam và sinh sẵn cấu hình allow IP Việt Nam / deny all cho các tường lửa, web server phổ biến.
 
-Chay: python3 scripts/build.py   (tu thu muc goc cua repo)
-Neu tai loi hoac du lieu bat thuong (it hon 1000 dai IPv4) thi giu nguyen file cu va thoat ma 1.
+Chạy: python3 scripts/build.py   (từ thư mục gốc của repo)
+Nếu tải lỗi hoặc dữ liệu bất thường (ít hơn 1000 dải IPv4) thì giữ nguyên file cũ và thoát mã 1.
 """
 import csv
 import datetime
@@ -34,7 +34,7 @@ def write(path, text):
 def main():
     raw = fetch(REGISTRY)
     if hashlib.md5(raw).hexdigest() != fetch(REGISTRY + '.md5').decode().split()[-1]:
-        sys.exit('md5 khong khop, giu file cu')
+        sys.exit('md5 không khớp, giữ file cũ')
     v4, v6 = [], []
     for line in raw.decode().splitlines():
         p = line.split('|')
@@ -46,15 +46,15 @@ def main():
             start = ipaddress.IPv4Address(p[3])
             v4 += ipaddress.summarize_address_range(start, start + int(p[4]) - 1)
     if len(v4) < 1000:
-        sys.exit(f'chi co {len(v4)} dai IPv4, bat thuong, giu file cu')
+        sys.exit(f'chỉ có {len(v4)} dải IPv4, bất thường, giữ file cũ')
     try:
         v4 += [ipaddress.ip_network(x.strip()) for x in fetch(EXTRA).decode().splitlines() if x.strip()]
-    except Exception as e:  # nguon phu loi thi van dung nguon chinh
-        print('bo qua nguon phu:', e)
+    except Exception as e:  # nguồn phụ lỗi thì vẫn dùng nguồn chính
+        print('bỏ qua nguồn phụ:', e)
     v4 = list(ipaddress.collapse_addresses(v4))
     v6 = list(ipaddress.collapse_addresses(v6))
     now = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d')
-    head = f'# Dai IP Viet Nam - tong hop boi TND (https://www.tnd.vn) - cap nhat {now}\n'
+    head = f'# Dải IP Việt Nam - tổng hợp bởi TND (https://www.tnd.vn) - cập nhật {now}\n'
     s4, s6 = [str(n) for n in v4], [str(n) for n in v6]
 
     write('vn-ipv4.txt', '\n'.join(s4) + '\n')
@@ -67,9 +67,9 @@ def main():
         w.writerows(rows)
     os.replace(os.path.join(ROOT, 'vn-ipv4.csv.tmp'), os.path.join(ROOT, 'vn-ipv4.csv'))
 
-    # Nginx: include trong server{} / location{}, sau cac dong allow IP quan tri
+    # Nginx: include trong server{} / location{}, sau các dòng allow IP quản trị
     write('formats/nginx-allow-vn.conf', head + ''.join(f'allow {c};\n' for c in s4 + s6) + 'deny all;\n')
-    # Apache 2.4: dat trong <Directory>/<Location> hoac .htaccess
+    # Apache 2.4: đặt trong <Directory>/<Location> hoặc .htaccess
     write('formats/apache-require-vn.conf', head + '<RequireAny>\n' +
           ''.join(f'    Require ip {c}\n' for c in s4 + s6) + '</RequireAny>\n')
     # ipset restore: ipset restore -exist < formats/ipset-vn.txt
@@ -80,14 +80,14 @@ def main():
     write('formats/nftables-vn.nft', head + 'set vn4 {\n    type ipv4_addr\n    flags interval\n    elements = {\n        ' +
           ',\n        '.join(s4) + '\n    }\n}\nset vn6 {\n    type ipv6_addr\n    flags interval\n    elements = {\n        ' +
           ',\n        '.join(s6) + '\n    }\n}\n')
-    # MikroTik RouterOS: /import file-name=mikrotik-vn.rsc
-    write('formats/mikrotik-vn.rsc', head + '/ip firewall address-list remove [find list=VN]\n/ip firewall address-list\n' +
+    # MikroTik RouterOS: /import file-name=mikrotik-vn.rsc (RouterOS không đọc tốt Unicode nên dòng đầu file để không dấu)
+    write('formats/mikrotik-vn.rsc', f'# Dai IP Viet Nam - tong hop boi TND (https://www.tnd.vn) - cap nhat {now}\n' + '/ip firewall address-list remove [find list=VN]\n/ip firewall address-list\n' +
           ''.join(f'add list=VN address={c}\n' for c in s4) +
           '/ipv6 firewall address-list remove [find list=VN]\n/ipv6 firewall address-list\n' +
           ''.join(f'add list=VN address={c}\n' for c in s6))
-    # Windows Firewall: dan vao RemoteAddress (gioi han ~1000 dia chi moi rule nen tach nhieu dong)
+    # Windows Firewall: dán vào RemoteAddress, tách 500 dải mỗi rule; ghi UTF-8 có BOM để PowerShell 5.1 đọc đúng dấu
     chunks = [s4[i:i + 500] for i in range(0, len(s4), 500)]
-    write('formats/windows-firewall-vn.ps1', '# Chay bang PowerShell (Admin). Doi -LocalPort cho dung cong can mo.\n' +
+    write('formats/windows-firewall-vn.ps1', '\ufeff' + head + '# Chạy bằng PowerShell (Admin). Đổi -LocalPort cho đúng cổng cần mở.\n' +
           ''.join(f'New-NetFirewallRule -DisplayName "Allow VN {i + 1}" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3389 '
                   f'-RemoteAddress {",".join(c)}\n' for i, c in enumerate(chunks)))
 

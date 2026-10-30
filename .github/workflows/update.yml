@@ -1,4 +1,4 @@
-name: Cap nhat dai IP Viet Nam
+name: Cập nhật dải IP Việt Nam
 on:
   schedule:
     - cron: '23 1 * * 1'
@@ -14,11 +14,11 @@ jobs:
         with:
           python-version: '3.12'
       - run: python3 scripts/build.py
-      - name: Commit neu co thay doi
+      - name: Commit nếu có thay đổi
         run: |
           git config user.name "TND Bot"
           git config user.email "bot@tnd.vn"
           git add -A
-          if git diff --cached --quiet -- vn-ipv4.txt vn-ipv6.txt; then echo "Khong doi"; exit 0; fi
-          git commit -m "Cap nhat dai IP Viet Nam $(date -u +%Y-%m-%d)"
+          if git diff --cached --quiet -- vn-ipv4.txt vn-ipv6.txt; then echo "Không đổi"; exit 0; fi
+          git commit -m "Cập nhật dải IP Việt Nam $(date -u +%Y-%m-%d)"
           git push

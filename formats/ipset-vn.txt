@@ -1,4 +1,4 @@
-# Dai IP Viet Nam - tong hop boi TND (https://www.tnd.vn) - cap nhat 2026-10-30
+# Dải IP Việt Nam - tổng hợp bởi TND (https://www.tnd.vn) - cập nhật 2026-10-30
 create vn4 hash:net family inet maxelem 65536 -exist
 create vn6 hash:net family inet6 maxelem 65536 -exist
 flush vn4

@@ -1,4 +1,4 @@
-# Dai IP Viet Nam - tong hop boi TND (https://www.tnd.vn) - cap nhat 2026-10-30
+# Dải IP Việt Nam - tổng hợp bởi TND (https://www.tnd.vn) - cập nhật 2026-10-30
 set vn4 {
     type ipv4_addr
     flags interval
